@@ -1098,12 +1098,7 @@ function copiarParaSummernote() {
 // Función para seleccionar todo
 function seleccionarTodo() {
     document.querySelectorAll('.selection-checkbox').forEach(cb => {
-        if (
-            cb.value !== 'Talcual' &&
-            !cb.classList.contains('hemograma-extra') &&
-            !cb.classList.contains('renal-extra') &&
-            !cb.classList.contains('hepatico-extra')
-        ) {
+        if (cb.value !== 'Talcual') {
             cb.checked = true;
         }
     });
@@ -1192,8 +1187,22 @@ function applyTheme(theme) {
     const html = document.documentElement;
     html.setAttribute('data-theme', theme);
 
-    // Actualizar meta theme-color para navegadores móviles
-    updateThemeColor(theme);
+    // Listener para selector de versión
+    const versionSelector = document.getElementById('versionSelector');
+    if (versionSelector) {
+        versionSelector.addEventListener('change', function () {
+            if (window.setExtractionVersion) {
+                window.setExtractionVersion(this.value);
+                extraerAutomaticamente(); // Re-procesar inmediatamente
+                mostrarNotificacion(`Cambiado a extractor ${this.options[this.selectedIndex].text}`, 'info');
+            }
+        });
+    }
+
+    // Inicializar con la versión por defecto (asegurar coincidencia UI y lógica)
+    if (window.setExtractionVersion && versionSelector) {
+        window.setExtractionVersion(versionSelector.value);
+    }
 }
 
 function updateThemeColor(theme) {
