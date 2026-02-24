@@ -302,6 +302,13 @@ class SimpleExtractor {
             resultados.push(this.formatearEtiqueta('GGT', ggtFormateada));
         }
 
+        // 5. LDH
+        const ldh = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.ldh);
+        if (ldh) {
+            const ldhFormateada = Math.round(parseFloat(ldh));
+            resultados.push(this.formatearEtiqueta('LDH', ldhFormateada));
+        }
+
         return this.limpiarAsteriscos(resultados.join(', '));
     }
 
@@ -361,6 +368,34 @@ class SimpleExtractor {
         return this.limpiarAsteriscos(resultados.join(', '));
     }
 
+    // ============== EXTRACTOR DE ORINA ==============
+    extraerOrina() {
+        let resultados = [];
+
+        // 1. RAC (Relación Albúmina/Creatinina)
+        const rac = extraerValor(this.texto, EXTRACTION_PATTERNS.orina.rac);
+        if (rac) {
+            const racFormateado = parseFloat(rac).toFixed(1);
+            resultados.push(this.formatearEtiqueta('RAC', racFormateado));
+        }
+
+        // 2. Microalbuminuria
+        const microalbuminuria = extraerValor(this.texto, EXTRACTION_PATTERNS.orina.microalbuminuria);
+        if (microalbuminuria) {
+            const microFormateado = parseFloat(microalbuminuria).toFixed(1);
+            resultados.push(this.formatearEtiqueta('MicroAlb', microFormateado));
+        }
+
+        // 3. Creatinina en Orina
+        const creatOrina = extraerValor(this.texto, EXTRACTION_PATTERNS.orina.creatinina_orina);
+        if (creatOrina) {
+            const creaOFormateada = parseFloat(creatOrina).toFixed(2);
+            resultados.push(this.formatearEtiqueta('Crea.Orina', creaOFormateada));
+        }
+
+        return this.limpiarAsteriscos(resultados.join(', '));
+    }
+
     // ============== EXTRACTOR NUTRICIONAL ==============
     extraerNutricional(opcionesSeleccionadas = []) {
         let resultados = [];
@@ -407,6 +442,20 @@ class SimpleExtractor {
         if (hdl && (opcionesSeleccionadas.includes('HDL') || opcionesSeleccionadas.includes('Nutricional'))) {
             const hdlFormateado = Math.round(parseFloat(hdl));
             resultados.push(this.formatearEtiqueta('HDL', hdlFormateado));
+        }
+
+        // 7. TRIGLICÉRIDOS
+        const trigliceridos = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.trigliceridos);
+        if (trigliceridos && (opcionesSeleccionadas.includes('Trigliceridos') || opcionesSeleccionadas.includes('Triglicéridos') || opcionesSeleccionadas.includes('Nutricional'))) {
+            const tgFormateado = Math.round(parseFloat(trigliceridos));
+            resultados.push(this.formatearEtiqueta('Tg', tgFormateado));
+        }
+
+        // 8. HBA1C
+        const hba1c = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.hba1c);
+        if (hba1c && (opcionesSeleccionadas.includes('HbA1c') || opcionesSeleccionadas.includes('Nutricional'))) {
+            const hbFormateada = parseFloat(hba1c).toFixed(1);
+            resultados.push(this.formatearEtiqueta('HbA1c', hbFormateada + '%'));
         }
 
         return this.limpiarAsteriscos(resultados.join(', '));
@@ -514,6 +563,9 @@ class SimpleExtractor {
             } else if (opcion === 'Hepático' || opcion === 'Hepatico') {
                 const hepatico = this.extraerHepatico();
                 if (hepatico) secciones.push(hepatico);
+            } else if (opcion === 'Orina') {
+                const orina = this.extraerOrina();
+                if (orina) secciones.push(orina);
             } else if (opcion === 'Coagulación' || opcion === 'Coagulacion') {
                 const coagulacion = this.extraerCoagulacion();
                 if (coagulacion) secciones.push(coagulacion);
