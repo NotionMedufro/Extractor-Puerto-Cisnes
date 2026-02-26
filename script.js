@@ -725,6 +725,7 @@ function obtenerOpcionesFormato() {
     const usarMayusculas = document.getElementById('usarMayusculas');
     const usarSaltosLinea = document.getElementById('usarSaltosLinea');
     const usarHb = document.getElementById('usarHb');
+    const formatoCV = document.getElementById('formatoCV');
     const dateFormatSelect = document.getElementById('dateFormatSelect');
 
     return {
@@ -732,6 +733,7 @@ function obtenerOpcionesFormato() {
         usarMayusculas: usarMayusculas ? usarMayusculas.checked : false,
         usarSaltosLinea: usarSaltosLinea ? usarSaltosLinea.checked : true,
         usarHb: usarHb ? usarHb.checked : true,
+        formatoCV: formatoCV ? formatoCV.checked : false,
         dateFormat: dateFormatSelect ? dateFormatSelect.value : 'dd/mm/yyyy'
     };
 }
@@ -753,12 +755,14 @@ function cargarOpcionesFormato() {
             const usarMayusculas = document.getElementById('usarMayusculas');
             const usarSaltosLinea = document.getElementById('usarSaltosLinea');
             const usarHb = document.getElementById('usarHb');
+            const formatoCV = document.getElementById('formatoCV');
             const dateFormatSelect = document.getElementById('dateFormatSelect');
 
             if (usarDosPuntos && opciones.usarDosPuntos !== undefined) usarDosPuntos.checked = opciones.usarDosPuntos;
             if (usarMayusculas && opciones.usarMayusculas !== undefined) usarMayusculas.checked = opciones.usarMayusculas;
             if (usarSaltosLinea && opciones.usarSaltosLinea !== undefined) usarSaltosLinea.checked = opciones.usarSaltosLinea;
             if (usarHb && opciones.usarHb !== undefined) usarHb.checked = opciones.usarHb;
+            if (formatoCV && opciones.formatoCV !== undefined) formatoCV.checked = opciones.formatoCV;
             if (dateFormatSelect && opciones.dateFormat) dateFormatSelect.value = opciones.dateFormat;
 
         } catch (e) {
@@ -769,7 +773,7 @@ function cargarOpcionesFormato() {
 
 // Función para inicializar listeners de opciones de formato
 function inicializarOpcionesFormato() {
-    const formatToggles = ['usarDosPuntos', 'usarMayusculas', 'usarSaltosLinea', 'usarHb'];
+    const formatToggles = ['usarDosPuntos', 'usarMayusculas', 'usarSaltosLinea', 'usarHb', 'formatoCV'];
 
     formatToggles.forEach(id => {
         const toggle = document.getElementById(id);

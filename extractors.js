@@ -494,8 +494,9 @@ class SimpleExtractor {
 
     // ============== EXTRACTOR DE FECHA ==============
     extraerFecha() {
+        const PATTERNS = typeof EXTRACTION_PATTERNS !== 'undefined' ? EXTRACTION_PATTERNS : window.EXTRACTION_PATTERNS;
         // Probar todos los patrones de fecha
-        for (let patron of EXTRACTION_PATTERNS.fechas.patrones) {
+        for (let patron of PATTERNS.fechas.patrones) {
             let coincidencia = this.texto.match(patron);
             if (coincidencia) {
                 let fechaCompleta = coincidencia[1];
@@ -534,9 +535,123 @@ class SimpleExtractor {
         return '';
     }
 
+    // ============== EXTRACTOR FORMATO CV ==============
+    generarFormatoCV() {
+        const SOFT_LINE_BREAK = '\u2028';
+        const separadorLineas = this.formatOptions.usarSaltosLinea ? '\n' : ', ';
+
+        let lineas = [];
+
+        const PATTERNS = typeof EXTRACTION_PATTERNS !== 'undefined' ? EXTRACTION_PATTERNS : window.EXTRACTION_PATTERNS;
+
+        // 1. Glic: , HbA1c:
+        let l1 = [];
+        let glic = extraerValor(this.texto, /(?:Glucosa|GLUCOSA:?|Glicemia|GLICEMIA:?)\s*[hi*]*\s*(\d+\.?\d*)\s*mg\/d[lL]/i);
+        if (glic) l1.push(`Glic: ${parseFloat(glic).toFixed(0)}`);
+
+        let hba1c = extraerValor(this.texto, PATTERNS.nutricional.hba1c);
+        if (hba1c) l1.push(`Hb1Ac: ${parseFloat(hba1c).toFixed(1)}%`);
+
+        if (l1.length > 0) lineas.push(l1.join(', ') + ',');
+
+        // 2. Col.T: , HDL: , LDL: , TGC:
+        let l2 = [];
+        let colT = extraerValor(this.texto, PATTERNS.nutricional.colesterol_total);
+        if (colT) l2.push(`Col.T: ${Math.round(parseFloat(colT))}`);
+
+        let hdl = extraerValor(this.texto, PATTERNS.nutricional.hdl);
+        if (hdl) l2.push(`HDL: ${Math.round(parseFloat(hdl))}`);
+
+        let ldl = extraerValor(this.texto, PATTERNS.nutricional.ldl);
+        if (ldl) l2.push(`LDL: ${Math.round(parseFloat(ldl))}`);
+
+        let tgc = extraerValor(this.texto, PATTERNS.nutricional.trigliceridos);
+        if (tgc) l2.push(`TGC: ${Math.round(parseFloat(tgc))}`);
+
+        if (l2.length > 0) lineas.push(l2.join(', ') + ',');
+
+        // 3. BiliT/D: , GOT/GPT: , FA: , GGT:
+        let l3 = [];
+        let biliT = extraerValor(this.texto, PATTERNS.hepatico.bilirrubina_total);
+        let biliD = extraerValor(this.texto, PATTERNS.hepatico.bilirrubina_directa);
+        if (biliT || biliD) {
+            l3.push(`BiliT/D: ${biliT ? parseFloat(biliT).toFixed(2) : '--'}/${biliD ? parseFloat(biliD).toFixed(2) : '--'}`);
+        }
+
+        let got = extraerValor(this.texto, PATTERNS.hepatico.got_asat);
+        let gpt = extraerValor(this.texto, PATTERNS.hepatico.gpt_alt);
+        if (got || gpt) {
+            l3.push(`GOT/GPT: ${got ? Math.round(parseFloat(got)) : '--'}/${gpt ? Math.round(parseFloat(gpt)) : '--'}`);
+        }
+
+        let fa = extraerValor(this.texto, PATTERNS.hepatico.fosfatasa_alcalina);
+        if (fa) l3.push(`FA: ${Math.round(parseFloat(fa))}`);
+
+        let ggt = extraerValor(this.texto, PATTERNS.hepatico.ggt);
+        // Sometimes GGT is missing decimals or has comma, fix to round value
+        if (ggt) l3.push(`GGT: ${Math.round(parseFloat(ggt.replace(',', '.')))}`);
+
+        if (l3.length > 0) lineas.push(l3.join(', ') + ',');
+
+        // 4. GB: , Hcto: , Hb: , Plaq:
+        let l4 = [];
+        let gb = extraerValor(this.texto, PATTERNS.hemograma.leucocitos);
+        if (gb) {
+            l4.push(`GB: ${parseFloat(gb).toFixed(1)}`);
+        }
+
+        let hcto = extraerValor(this.texto, PATTERNS.hemograma.hematocrito);
+        if (hcto) l4.push(`Hcto: ${Math.round(parseFloat(hcto))}%`);
+
+        let hb = extraerValor(this.texto, PATTERNS.hemograma.hemoglobina);
+        if (hb) l4.push(`Hb: ${parseFloat(hb).toFixed(1)}`);
+
+        let plaq = extraerValor(this.texto, PATTERNS.hemograma.plaquetas);
+        if (plaq) l4.push(`Plaq: ${plaq}`);
+
+        if (l4.length > 0) lineas.push(l4.join(' , ')); // space before comma according to user representation
+
+        // 5. ELP: , Crea: , Urea: , Á. Úrico:
+        let l5 = [];
+        let na = extraerValor(this.texto, PATTERNS.renal.sodio);
+        let k = extraerValor(this.texto, PATTERNS.renal.potasio);
+        let cl = extraerValor(this.texto, PATTERNS.renal.cloro);
+        if (na || k || cl) {
+            let elpStr = `${na ? Math.round(parseFloat(na)) : '--'}/${k ? parseFloat(k).toFixed(1) : '--'}/${cl ? Math.round(parseFloat(cl)) : '--'}`;
+            l5.push(`ELP: ${elpStr}`);
+        }
+
+        let crea = extraerValor(this.texto, PATTERNS.renal.creatinina);
+        if (crea) l5.push(`Crea: ${parseFloat(crea).toFixed(2)}`);
+
+        let urea = extraerValor(this.texto, PATTERNS.renal.urea);
+        if (urea) l5.push(`Urea: ${parseFloat(urea).toFixed(0)}`);
+
+        let aurico = extraerValor(this.texto, PATTERNS.renal.acido_urico);
+        if (aurico) l5.push(`Á. Úrico: ${parseFloat(aurico).toFixed(1)}`);
+
+        // The prompt requested "ELP: 143/3.7/102, Crea: 0.90, Urea: 28,"
+        if (l5.length > 0) lineas.push(l5.join(', ') + ',');
+
+        let resultado = lineas.join(separadorLineas);
+
+        let fecha = this.extraerFecha();
+        if (fecha) {
+            resultado = fecha + separadorLineas + resultado;
+        }
+
+        return resultado;
+    }
+
     // ============== FUNCIÓN PRINCIPAL ==============
     procesar(texto, opcionesSeleccionadas) {
         this.texto = texto;
+        this.opcionesSeleccionadas = opcionesSeleccionadas;
+
+        if (this.formatOptions && this.formatOptions.formatoCV) {
+            return this.generarFormatoCV();
+        }
+
         let lineas = [];
 
         // Agregar fecha si está seleccionada
